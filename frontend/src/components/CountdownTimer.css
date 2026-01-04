@@ -1,0 +1,67 @@
+.countdown-timer {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.countdown-timer.overdue {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  animation: pulse 2s infinite;
+}
+
+.countdown-timer.closed {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.timer-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.timer-value {
+  font-size: 36px;
+  font-weight: bold;
+  margin: 15px 0;
+  font-family: 'Courier New', monospace;
+}
+
+.timer-deadline {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 10px;
+}
+
+.countdown-timer.compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 0;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.countdown-timer.compact .timer-icon {
+  font-size: 14px;
+}
+
+.countdown-timer.compact .timer-text {
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+}

@@ -1,0 +1,128 @@
+.ticket-history {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.ticket-history h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.history-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.history-timeline::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.history-item {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.history-icon {
+  position: absolute;
+  left: -2rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 50%;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+.history-content {
+  flex: 1;
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.history-user {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.history-department {
+  font-weight: normal;
+  color: #6c757d;
+}
+
+.history-date {
+  color: #6c757d;
+  font-size: 0.8125rem;
+}
+
+.history-description {
+  color: #495057;
+  line-height: 1.5;
+}
+
+.history-loading,
+.history-error,
+.history-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.history-error {
+  color: #dc3545;
+  background: #f8d7da;
+}
+
+@media (max-width: 768px) {
+  .history-timeline {
+    padding-left: 1.5rem;
+  }
+
+  .history-icon {
+    left: -1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
