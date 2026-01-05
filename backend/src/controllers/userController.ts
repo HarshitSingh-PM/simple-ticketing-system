@@ -185,3 +185,66 @@ export const deactivateUser = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const changeUserPassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const userCheck = await query('SELECT id FROM users WHERE id = $1', [id]);
+
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await query(
+      'UPDATE users SET password_hash = $1, must_change_password = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [passwordHash, id]
+    );
+
+    return res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change user password error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const deleteUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const userCheck = await query('SELECT id, email FROM users WHERE id = $1', [id]);
+
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user is admin@system.com - prevent deletion
+    if (userCheck.rows[0].email === 'admin@system.com') {
+      return res.status(400).json({ error: 'Cannot delete the system admin account' });
+    }
+
+    // Check if user has created tickets
+    const ticketCheck = await query('SELECT COUNT(*) FROM tickets WHERE created_by = $1', [id]);
+    const ticketCount = parseInt(ticketCheck.rows[0].count);
+
+    if (ticketCount > 0) {
+      return res.status(400).json({
+        error: `Cannot delete user who has created ${ticketCount} ticket(s). Please deactivate instead.`
+      });
+    }
+
+    await query('DELETE FROM users WHERE id = $1', [id]);
+
+    return res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
