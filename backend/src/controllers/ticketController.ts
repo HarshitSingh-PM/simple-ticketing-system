@@ -197,12 +197,7 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
     const ticket = await getTicketWithDetails(ticketId);
 
     if (ticket) {
-      const departmentEmails = await getDepartmentUserEmails(assigned_department_id);
-      if (departmentEmails.length > 0) {
-        await sendTicketAssignedEmail(departmentEmails, ticket);
-      }
-
-      // Log ticket creation
+      // Log ticket creation first
       await logTicketHistory(
         ticketId,
         userId,
@@ -212,6 +207,15 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
         null,
         `Ticket created and assigned to ${ticket.department_name}`
       );
+
+      // Send email asynchronously (non-blocking) for instant response
+      const departmentEmails = await getDepartmentUserEmails(assigned_department_id);
+      if (departmentEmails.length > 0) {
+        // Don't await - let email send in background
+        sendTicketAssignedEmail(departmentEmails, ticket, userId).catch(err =>
+          console.error('Background email send failed:', err)
+        );
+      }
     }
 
     return res.status(201).json(ticket);
@@ -466,15 +470,20 @@ export const updateTicket = async (req: AuthRequest, res: Response) => {
     }
 
     if (updatedTicket) {
+      // Send emails asynchronously (non-blocking) for instant response
       if (assigned_department_id && assigned_department_id !== currentTicket.assigned_department_id) {
         const departmentEmails = await getDepartmentUserEmails(assigned_department_id);
         if (departmentEmails.length > 0) {
-          await sendTicketReassignedEmail(departmentEmails, updatedTicket);
+          sendTicketReassignedEmail(departmentEmails, updatedTicket, userId).catch(err =>
+            console.error('Background reassignment email send failed:', err)
+          );
         }
       }
 
       if (status === 'Closed' && currentTicket.status !== 'Closed') {
-        await sendTicketClosedEmail(updatedTicket.creator_email, updatedTicket);
+        sendTicketClosedEmail(updatedTicket.creator_email, updatedTicket, userId).catch(err =>
+          console.error('Background closure email send failed:', err)
+        );
       }
     }
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../api/users';
 import { departmentsApi } from '../api/departments';
 import type { User, Department, CreateUserRequest } from '../types';
+import { EmailStats } from '../components/EmailStats';
 import './AdminSettings.css';
 
 const AdminSettings: React.FC = () => {
@@ -11,6 +12,9 @@ const AdminSettings: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showUserForm, setShowUserForm] = useState(false);
   const [showDeptForm, setShowDeptForm] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -82,6 +86,47 @@ const AdminSettings: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserId) return;
+
+    setIsLoading(true);
+    setError('');
+    try {
+      await usersApi.changePassword(selectedUserId, newPassword);
+      alert('Password changed successfully!');
+      setShowPasswordModal(false);
+      setSelectedUserId(null);
+      setNewPassword('');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to change password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return;
+
+    setIsLoading(true);
+    try {
+      await usersApi.delete(userId);
+      alert('User deleted successfully!');
+      await loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete user');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openPasswordModal = (userId: number) => {
+    setSelectedUserId(userId);
+    setNewPassword('');
+    setError('');
+    setShowPasswordModal(true);
   };
 
   const handleCreateDepartment = async (e: React.FormEvent) => {
@@ -298,6 +343,8 @@ const AdminSettings: React.FC = () => {
             <div className="content-header">
               <h2>Email Configuration</h2>
             </div>
+
+            <EmailStats />
 
             <div className="email-setup-guide">
               <div className="guide-section">

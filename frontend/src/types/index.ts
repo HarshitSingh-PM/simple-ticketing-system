@@ -129,3 +129,21 @@ export interface DepartmentAnalytics {
   closed_on_time: number;
   closed_delayed: number;
 }
+
+export interface EmailTypeCount {
+  email_type: string;
+  count: number;
+}
+
+export interface EmailStats {
+  today: {
+    total: number;
+    byType: EmailTypeCount[];
+    successful: number;
+    failed: number;
+  };
+  month: {
+    total: number;
+    byType: EmailTypeCount[];
+  };
+}
