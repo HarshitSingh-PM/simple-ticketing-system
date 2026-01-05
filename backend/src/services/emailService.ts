@@ -242,3 +242,49 @@ export const sendTicketOverdueEmail = async (
     await logEmail(ticket.id, 'ticket_overdue', recipientEmails, subject, sentBy, false, error instanceof Error ? error.message : 'Unknown error');
   }
 };
+
+export const sendUserWelcomeEmail = async (
+  recipientEmail: string,
+  userName: string,
+  userPassword: string,
+  createdBy: number | null = null
+) => {
+  const loginUrl = `${FRONTEND_URL}/login`;
+  const subject = `Welcome to the Ticketing System`;
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: recipientEmail,
+    subject: subject,
+    html: `
+      <h2>Welcome to the Ticketing System!</h2>
+      <p>Hello <strong>${userName}</strong>,</p>
+      <p>Your account has been created successfully. You can now login to the ticketing system using the credentials below:</p>
+
+      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>Email:</strong> ${recipientEmail}</p>
+        <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${userPassword}</p>
+        <p style="margin: 5px 0;"><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+      </div>
+
+      <p><strong style="color: #856404;">⚠️ Important:</strong> For security reasons, please change your password after your first login.</p>
+
+      <p>If you have any questions or need assistance, please contact your system administrator.</p>
+
+      <p>Best regards,<br>Ticketing System Team</p>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Welcome email sent to: ${recipientEmail}`);
+
+    // Log email to database
+    await logEmail(null, 'user_welcome', [recipientEmail], subject, createdBy, true);
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+
+    // Log failed email
+    await logEmail(null, 'user_welcome', [recipientEmail], subject, createdBy, false, error instanceof Error ? error.message : 'Unknown error');
+  }
+};

@@ -3,6 +3,7 @@ import { query } from '../config/database';
 import { hashPassword } from '../utils/auth';
 import { AuthRequest } from '../middleware/auth';
 import { CreateUserRequest, UpdateUserRequest } from '../models/types';
+import { sendUserWelcomeEmail } from '../services/emailService';
 
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
   try {
@@ -69,6 +70,12 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     );
 
     const user = result.rows[0];
+
+    // Send welcome email asynchronously (non-blocking)
+    const userId = req.user?.userId;
+    sendUserWelcomeEmail(email, name, password, userId || null).catch(err =>
+      console.error('Background welcome email send failed:', err)
+    );
 
     return res.status(201).json({
       id: user.id,
