@@ -12,6 +12,11 @@ const AdminSettings: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showUserForm, setShowUserForm] = useState(false);
   const [showDeptForm, setShowDeptForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editedUser, setEditedUser] = useState({ name: '', email: '', department_id: null as number | null });
+  const [newPassword, setNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -85,6 +90,91 @@ const AdminSettings: React.FC = () => {
     }
   };
 
+  const handleActivateUser = async (userId: number) => {
+    if (!confirm('Are you sure you want to activate this user?')) return;
+
+    setIsLoading(true);
+    try {
+      await usersApi.activate(userId);
+      alert('User activated successfully!');
+      await loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to activate user');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setEditedUser({
+      name: user.name,
+      email: user.email,
+      department_id: user.departmentId,
+    });
+    setError('');
+    setShowEditModal(true);
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    setIsLoading(true);
+    setError('');
+    try {
+      await usersApi.update(selectedUser.id, editedUser);
+      alert('User updated successfully!');
+      setShowEditModal(false);
+      setSelectedUser(null);
+      await loadData();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update user');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openPasswordModal = (user: User) => {
+    setSelectedUser(user);
+    setNewPassword('');
+    setError('');
+    setShowPasswordModal(true);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    setIsLoading(true);
+    setError('');
+    try {
+      await usersApi.changePassword(selectedUser.id, newPassword);
+      alert('Password changed successfully!');
+      setShowPasswordModal(false);
+      setSelectedUser(null);
+      setNewPassword('');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to change password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number, userEmail: string) => {
+    if (!confirm(`Are you sure you want to permanently delete user "${userEmail}"? This action cannot be undone.`)) return;
+
+    setIsLoading(true);
+    try {
+      await usersApi.delete(userId);
+      alert('User deleted successfully!');
+      await loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete user');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,15 +330,53 @@ const AdminSettings: React.FC = () => {
                         </span>
                       </td>
                       <td>
-                        {user.isActive && (
+                        <div className="action-buttons">
                           <button
-                            onClick={() => handleDeactivateUser(user.id)}
-                            className="btn-danger-small"
+                            onClick={() => openEditModal(user)}
+                            className="btn-edit-small"
                             disabled={isLoading}
+                            title="Edit user"
                           >
-                            Deactivate
+                            Edit
                           </button>
-                        )}
+                          <button
+                            onClick={() => openPasswordModal(user)}
+                            className="btn-secondary-small"
+                            disabled={isLoading}
+                            title="Change password"
+                          >
+                            Password
+                          </button>
+                          {user.isActive ? (
+                            <button
+                              onClick={() => handleDeactivateUser(user.id)}
+                              className="btn-warning-small"
+                              disabled={isLoading}
+                              title="Deactivate user"
+                            >
+                              Deactivate
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleActivateUser(user.id)}
+                              className="btn-success-small"
+                              disabled={isLoading}
+                              title="Activate user"
+                            >
+                              Activate
+                            </button>
+                          )}
+                          {user.email !== 'admin@system.com' && (
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.email)}
+                              className="btn-danger-small"
+                              disabled={isLoading}
+                              title="Delete user"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -362,6 +490,104 @@ SMTP_FROM=your-email@gmail.com`}</pre>
                   </ul>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit User Modal */}
+        {showEditModal && selectedUser && (
+          <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h3>Edit User: {selectedUser.name}</h3>
+              {error && <div className="error-message">{error}</div>}
+              <form onSubmit={handleEditUser}>
+                <div className="form-group">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    value={editedUser.name}
+                    onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={editedUser.email}
+                    onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Department</label>
+                  <select
+                    value={editedUser.department_id || ''}
+                    onChange={(e) =>
+                      setEditedUser({
+                        ...editedUser,
+                        department_id: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                  >
+                    <option value="">None</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="modal-actions">
+                  <button type="submit" className="btn-primary" disabled={isLoading}>
+                    Save Changes
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowEditModal(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showPasswordModal && selectedUser && (
+          <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h3>Change Password: {selectedUser.name}</h3>
+              {error && <div className="error-message">{error}</div>}
+              <form onSubmit={handleChangePassword}>
+                <div className="form-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Enter new password (min 6 characters)"
+                  />
+                </div>
+                <div className="modal-actions">
+                  <button type="submit" className="btn-primary" disabled={isLoading}>
+                    Change Password
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowPasswordModal(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

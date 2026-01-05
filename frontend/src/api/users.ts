@@ -25,6 +25,10 @@ export const usersApi = {
     await apiClient.post(`/users/${id}/deactivate`);
   },
 
+  activate: async (id: number): Promise<void> => {
+    await apiClient.post(`/users/${id}/activate`);
+  },
+
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/users/${id}`);
   },

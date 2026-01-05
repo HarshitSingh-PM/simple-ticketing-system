@@ -186,6 +186,28 @@ export const deactivateUser = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const activateUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const userCheck = await query('SELECT id FROM users WHERE id = $1', [id]);
+
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await query(
+      'UPDATE users SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [id]
+    );
+
+    return res.json({ message: 'User activated successfully' });
+  } catch (error) {
+    console.error('Activate user error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const changeUserPassword = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
